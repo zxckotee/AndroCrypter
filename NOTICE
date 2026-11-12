@@ -1,0 +1,19 @@
+HCVault
+Copyright 2026 HCVault contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party components (see docs/licenses.md and LICENSES/ for full texts):
+
+- AndroidX, Jetpack Compose, Material 3 (Apache License 2.0)
+- Kotlin and kotlinx.coroutines (Apache License 2.0)
+- Dagger/Hilt (Apache License 2.0)
+- libsu by John Wu (Apache License 2.0)
+
+Native volume layer (added in the native-volume-core change):
+- Portions derived from VeraCrypt (IDRIX), distributed under the Apache License 2.0
+  and the TrueCrypt License 3.0, and from TrueCrypt (TrueCrypt Foundation).
+
+"VeraCrypt" and "TrueCrypt" are names of their respective owners. HCVault is an independent
+application that is compatible with the VeraCrypt volume format; it is not affiliated with or
+endorsed by IDRIX or the TrueCrypt Foundation.
