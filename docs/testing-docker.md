@@ -50,3 +50,14 @@ Further scripts (`build-ndk.sh`, `run-native-tests.sh`, `start-emulator.sh`,
 `artifacts/` contains `summary.txt`, one `<stage>.log` per stage, JUnit XML, the debug APK. The fixture
 password is masked in all logs. Every stage failure makes `run-local.sh` exit with code 1 after
 teardown ran.
+
+## Troubleshooting
+
+- **No network inside the container on user-defined networks** (seen in some nested/sandboxed Docker
+  hosts: `curl` works with `docker run` but not with `docker compose run`). Use the default bridge for
+  the run: `docker compose -f docker-compose.yml -f docker-compose.local.yml run ...` with a local,
+  untracked override such as
+  `services: { android-ci-nokvm: { network_mode: bridge } }`.
+- **Java cannot connect while curl can**: IPv6 without a route; `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true`
+  is already set in `docker-compose.yml`.
+- **Permission denied on /dev/kvm**: export `KVM_GID=$(stat -c %g /dev/kvm)` before `docker compose`.

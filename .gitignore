@@ -14,3 +14,4 @@ native/build/
 *.keystore
 *.jks
 .DS_Store
+docker-compose.local.yml

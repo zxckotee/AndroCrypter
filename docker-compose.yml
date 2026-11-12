@@ -19,6 +19,8 @@ x-ci-common: &ci-common
     - ABIS=arm64-v8a,x86_64
     - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g
     - CCACHE_DIR=/home/ci/.ccache
+    # Docker bridge networks often have no IPv6 route; Java does not fall back like curl does.
+    - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
     - ALLOW_NO_KVM_SKIP=0
     - VERIFY_WITH_VERACRYPT=0
   shm_size: "2gb"
@@ -38,6 +40,8 @@ services:
       - ABIS=arm64-v8a,x86_64
       - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g
       - ALLOW_NO_KVM_SKIP=1
+      - CCACHE_DIR=/home/ci/.ccache
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
     command: ["scripts/ci/run-local.sh"]
 
   # Mounted-mode experiments (/dev/fuse, loop devices); used by the magisk tier.
@@ -54,6 +58,8 @@ services:
       - API=34
       - ABIS=arm64-v8a,x86_64
       - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g
+      - CCACHE_DIR=/home/ci/.ccache
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
       - RUN_MAGISK_TIER=1
 
 volumes:
