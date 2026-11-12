@@ -9,8 +9,9 @@ Two modes:
 2. **Mounted (Magisk).** With Magisk or a compatible `su` (libsu, mount-master) the decrypted volume
    is exposed through loop + kernel mount. Planned after the non-mounted MVP.
 
-Status: bootstrap. See [docs/architecture.md](docs/architecture.md) for the design and
-[docs/testing-docker.md](docs/testing-docker.md) for the CI/test setup.
+Status: bootstrap. See [docs/architecture.md](docs/architecture.md) for the design,
+[docs/testing-docker.md](docs/testing-docker.md) for the Docker test setup, and
+[docs/ci-github.md](docs/ci-github.md) for GitHub Actions, secrets and SSH deploy.
 
 ## Quick start
 
