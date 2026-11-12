@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "fixtures": [
+    {
+      "name": "aes-sha512-fat12",
+      "file": "testdata/fixtures/aes-sha512-fat12.hc",
+      "sizeBytes": 3145728,
+      "encryption": "AES",
+      "hash": "SHA-512",
+      "filesystem": "FAT12",
+      "pim": 0
+    }
+  ]
+}

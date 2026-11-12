@@ -17,4 +17,5 @@ interface VolumeEngine {
 
 interface VolumeSession : AutoCloseable {
     val dataSizeBytes: Long
+    suspend fun read(offset: Long, length: Int): VaultResult<ByteArray>
 }

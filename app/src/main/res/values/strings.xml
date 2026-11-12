@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">HCVault</string>
     <string name="home_title">HCVault</string>
     <string name="home_subtitle">Client for VeraCrypt-compatible volumes</string>
     <string name="home_open_volume">Open volume</string>
+    <string name="open_title">Unlock volume</string>
+    <string name="open_pick_volume">Pick .hc file</string>
+    <string name="open_password">Password</string>
+    <string name="open_unlock">Unlock</string>
+    <string name="open_back">Back</string>
+    <string name="browse_header" tools:ignore="PluralsCandidate">Decrypted area: %1$d bytes — %2$d root entries</string>
+    <string name="browse_close">Close volume</string>
 </resources>

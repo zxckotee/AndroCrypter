@@ -11,6 +11,11 @@ captures/
 artifacts/
 .emulator.pid
 native/build/
+native/build-ci/
+native/build-host/
+native/build-smoke/
+core-crypto/.cxx/
+core-crypto/build/intermediates/cxx/
 *.keystore
 *.jks
 .DS_Store
