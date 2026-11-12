@@ -1,0 +1,28 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-and-native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build CI image
+        run: scripts/ci/docker/build-image.sh
+      - name: static + jvm + build
+        env:
+          TEST_VOLUME_PASSWORD: ${{ secrets.TEST_VOLUME_PASSWORD }}
+        run: |
+          export HOST_UID=$(id -u) HOST_GID=$(id -g)
+          docker compose run --rm android-ci-nokvm
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: artifacts-static
+          path: artifacts/

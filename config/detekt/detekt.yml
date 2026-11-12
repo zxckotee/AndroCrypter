@@ -1,0 +1,81 @@
+build:
+  maxIssues: 0
+
+formatting:
+  active: true
+  Filename:
+    active: false
+  MaximumLineLength:
+    active: true
+    maxLineLength: 120
+  Indentation:
+    active: true
+    indentSize: 4
+  NoWildcardImports:
+    active: true
+  ImportOrdering:
+    active: false
+  ArgumentListWrapping:
+    active: false
+
+style:
+  # Secrets must never reach a logger. Production logging goes through core-common `HcLog`,
+  # which accepts only String messages and is stripped in release builds.
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - reason: 'use HcLog (secret-safe, stripped in release)'
+        value: 'android.util.Log.d'
+      - reason: 'use HcLog (secret-safe, stripped in release)'
+        value: 'android.util.Log.v'
+      - reason: 'use HcLog (secret-safe, stripped in release)'
+        value: 'android.util.Log.i'
+      - reason: 'use HcLog (secret-safe, stripped in release)'
+        value: 'android.util.Log.w'
+      - reason: 'use HcLog (secret-safe, stripped in release)'
+        value: 'android.util.Log.e'
+      - reason: 'use HcLog'
+        value: 'kotlin.io.println'
+      - reason: 'use HcLog'
+        value: 'kotlin.io.print'
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  MagicNumber:
+    active: true
+    ignoreNumbers: ['-1', '0', '1', '2', '1000']
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreExtensionFunctions: true
+  ReturnCount:
+    active: true
+    max: 4
+  UnusedPrivateMember:
+    active: true
+  ForbiddenComment:
+    active: false
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 80
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+    ignoreOverridden: true
+
+naming:
+  MatchingDeclarationName:
+    active: false
+  FunctionNaming:
+    active: true
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    active: true
+
+potential-bugs:
+  UnsafeCallOnNullableType:
+    active: true
+

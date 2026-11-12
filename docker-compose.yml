@@ -1,0 +1,61 @@
+# Usage: docker compose run --rm android-ci scripts/ci/run-local.sh
+# Without KVM, remove the `devices` entry (or use docker-compose.nokvm.yml); see docs/testing-docker.md.
+x-ci-common: &ci-common
+  build:
+    context: .
+    dockerfile: docker/android-ci/Dockerfile
+  image: hcvault/android-ci:local
+  working_dir: /workspace
+  user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+  group_add:
+    - "${KVM_GID:-993}"
+  volumes:
+    - .:/workspace
+    - gradle-cache:/home/ci/.gradle
+    - ccache:/home/ci/.ccache
+  environment:
+    - TEST_VOLUME_PASSWORD
+    - API=34
+    - ABIS=arm64-v8a,x86_64
+    - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g
+    - CCACHE_DIR=/home/ci/.ccache
+    - ALLOW_NO_KVM_SKIP=0
+    - VERIFY_WITH_VERACRYPT=0
+  shm_size: "2gb"
+
+services:
+  android-ci:
+    <<: *ci-common
+    devices:
+      - /dev/kvm:/dev/kvm
+    command: ["scripts/ci/run-local.sh"]
+
+  # No /dev/kvm: static + native + JVM stages only (emulator stages are skipped, see ALLOW_NO_KVM_SKIP).
+  android-ci-nokvm:
+    <<: *ci-common
+    environment:
+      - TEST_VOLUME_PASSWORD
+      - ABIS=arm64-v8a,x86_64
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g
+      - ALLOW_NO_KVM_SKIP=1
+    command: ["scripts/ci/run-local.sh"]
+
+  # Mounted-mode experiments (/dev/fuse, loop devices); used by the magisk tier.
+  android-ci-privileged:
+    <<: *ci-common
+    privileged: true
+    devices:
+      - /dev/kvm:/dev/kvm
+      - /dev/fuse:/dev/fuse
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - TEST_VOLUME_PASSWORD
+      - API=34
+      - ABIS=arm64-v8a,x86_64
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g
+      - RUN_MAGISK_TIER=1
+
+volumes:
+  gradle-cache:
+  ccache:

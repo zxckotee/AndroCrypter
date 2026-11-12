@@ -1,0 +1,16 @@
+.gradle/
+build/
+*/build/
+build-logic/**/build/
+.idea/
+*.iml
+local.properties
+.cxx/
+.externalNativeBuild/
+captures/
+artifacts/
+.emulator.pid
+native/build/
+*.keystore
+*.jks
+.DS_Store
