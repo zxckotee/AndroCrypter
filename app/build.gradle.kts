@@ -17,6 +17,16 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            val home = System.getenv("HOME") ?: "/home/ci"
+            storeFile = file("$home/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true

@@ -29,6 +29,8 @@ trap cleanup EXIT
 
 cd "$ROOT"
 export HOME="${HOME:-/home/ci}"
+export GRADLE_OPTS="${GRADLE_OPTS:-} -Duser.home=${HOME}"
+export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Duser.home=${HOME}"
 "$(dirname "$0")/ensure-debug-keystore.sh"
 
 # 1. Static analysis and JVM unit tests

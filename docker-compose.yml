@@ -18,10 +18,10 @@ x-ci-common: &ci-common
     - TEST_VOLUME_PASSWORD
     - API=34
     - ABIS=arm64-v8a,x86_64
-    - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g
+    - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g -Duser.home=/home/ci
     - CCACHE_DIR=/home/ci/.ccache
     # Docker bridge networks often have no IPv6 route; Java does not fall back like curl does.
-    - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+    - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true -Duser.home=/home/ci
     - ALLOW_NO_KVM_SKIP=0
     - VERIFY_WITH_VERACRYPT=0
   shm_size: "2gb"
@@ -40,10 +40,10 @@ services:
       - HOME=/home/ci
       - TEST_VOLUME_PASSWORD
       - ABIS=arm64-v8a,x86_64
-      - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false -Xmx3g -Duser.home=/home/ci
       - ALLOW_NO_KVM_SKIP=1
       - CCACHE_DIR=/home/ci/.ccache
-      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true -Duser.home=/home/ci
     command: ["scripts/ci/run-local.sh"]
 
   # Mounted-mode experiments (/dev/fuse, loop devices); used by the magisk tier.

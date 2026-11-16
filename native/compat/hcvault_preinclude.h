@@ -3,6 +3,11 @@
 #define VC_DCS_DISABLE_ARGON2 1
 #define HCVAULT_BUILD 1
 
+#ifndef _MSC_VER
+typedef unsigned long long unsigned __int64;
+typedef long long __int64;
+#endif
+
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <wchar.h>
