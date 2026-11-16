@@ -33,6 +33,10 @@ if(ANDROID)
     if(ANDROID_ABI STREQUAL "x86" OR ANDROID_ABI STREQUAL "x86_64")
         list(APPEND HCVAULT_C_FLAGS -msse2)
     endif()
+    set(HCVAULT_PAGE_SIZE_LINK_FLAGS
+        "-Wl,-z,max-page-size=16384"
+        "-Wl,-z,common-page-size=16384"
+    )
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-6]86")
     list(APPEND HCVAULT_C_FLAGS -msse2)
 endif()
@@ -113,5 +117,5 @@ if(ANDROID)
     add_library(hcvault_jni SHARED jni/hcvault_jni.c)
     target_link_libraries(hcvault_jni PRIVATE veracrypt_volume log)
     target_include_directories(hcvault_jni PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_options(hcvault_jni PRIVATE "-Wl,-z,max-page-size=16384")
+    target_link_options(hcvault_jni PRIVATE ${HCVAULT_PAGE_SIZE_LINK_FLAGS})
 endif()

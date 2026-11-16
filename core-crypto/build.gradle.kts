@@ -12,7 +12,11 @@ android {
         }
         externalNativeBuild {
             cmake {
-                arguments("-DANDROID_STL=c++_shared", "-DHCVAULT_BUILD_TESTS=OFF")
+                arguments(
+                    "-DANDROID_STL=c++_shared",
+                    "-DHCVAULT_BUILD_TESTS=OFF",
+                    "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+                )
             }
         }
     }

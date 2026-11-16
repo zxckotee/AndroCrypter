@@ -28,6 +28,8 @@ cleanup() {
 trap cleanup EXIT
 
 cd "$ROOT"
+export HOME="${HOME:-/home/ci}"
+"$(dirname "$0")/ensure-debug-keystore.sh"
 
 # 1. Static analysis and JVM unit tests
 stage detekt       ./gradlew --no-daemon detekt
