@@ -3,6 +3,8 @@
 source "$(dirname "$0")/lib.sh"
 cd "$ROOT"
 
+"$(dirname "$0")/ensure-debug-keystore.sh"
+
 ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest 2>&1 | tee "$ART/gradle-assemble.log"
 [[ "${PIPESTATUS[0]}" -eq 0 ]] || die "gradle assemble failed"
 
