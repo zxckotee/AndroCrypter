@@ -161,7 +161,7 @@ void ComputeBootloaderFingerprint (uint8 *bootLoaderBuf, unsigned int bootLoader
 #endif
 #endif
 
-#if !defined (DEVICE_DRIVER) && !defined (TC_WINDOWS_BOOT) && !defined(_UEFI)
+#if !defined (DEVICE_DRIVER) && !defined (TC_WINDOWS_BOOT) && !defined(_UEFI) && !defined(HCVAULT_BUILD)
 int CreateVolumeHeaderInMemory (HWND hwndDlg, BOOL bBoot, unsigned char *encryptedHeader, int ea, int mode, Password *password, int pkcs5_prf, int pim, char *masterKeydata, PCRYPTO_INFO *retInfo, unsigned __int64 volumeSize, unsigned __int64 hiddenVolumeSize, unsigned __int64 encryptedAreaStart, unsigned __int64 encryptedAreaLength, uint16 requiredProgramVersion, uint32 headerFlags, uint32 sectorSize, BOOL bWipeMode);
 BOOL ReadEffectiveVolumeHeader (BOOL device, HANDLE fileHandle, uint8 *header, DWORD *bytesRead);
 BOOL WriteEffectiveVolumeHeader (BOOL device, HANDLE fileHandle, uint8 *header);

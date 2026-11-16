@@ -3,9 +3,9 @@
 #define VC_DCS_DISABLE_ARGON2 1
 #define HCVAULT_BUILD 1
 
-#ifndef _MSC_VER
-typedef unsigned long long unsigned __int64;
-typedef long long __int64;
+/* VeraCrypt sources use MSVC-style unsigned __int64; GNU lacks __int64 unless mapped. */
+#if !defined(_MSC_VER) && !defined(__int64)
+#define __int64 long long
 #endif
 
 #include <stdlib.h>
