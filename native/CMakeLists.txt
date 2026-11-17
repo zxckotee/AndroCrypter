@@ -39,6 +39,9 @@ if(ANDROID)
     )
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-6]86")
     list(APPEND HCVAULT_C_FLAGS -msse2)
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+        list(APPEND HCVAULT_C_FLAGS -maes -mpclmul)
+    endif()
 endif()
 
 set(VERACRYPT_COMMON_SRC

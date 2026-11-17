@@ -3,6 +3,11 @@
 #define VC_DCS_DISABLE_ARGON2 1
 #define HCVAULT_BUILD 1
 
+/* VeraCrypt sources use MSVC-style unsigned __int64; GNU lacks __int64 unless mapped. */
+#if !defined(_MSC_VER) && !defined(__int64)
+#define __int64 long long
+#endif
+
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <wchar.h>
