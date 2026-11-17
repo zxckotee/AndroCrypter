@@ -1,4 +1,5 @@
 name: ci
+
 on:
   push:
     branches: [main]
@@ -8,21 +9,89 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  IMAGE_TAG: hcvault/android-ci:ci-${{ github.run_id }}
+
 jobs:
   static-and-native:
+  # Fast gate: no KVM; native + APK build when TEST_VOLUME_PASSWORD is set.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Build CI image
         run: scripts/ci/docker/build-image.sh
-      - name: static + jvm + build
+
+      - name: static + JVM + native + APK (no emulator)
         env:
           TEST_VOLUME_PASSWORD: ${{ secrets.TEST_VOLUME_PASSWORD }}
         run: |
           export HOST_UID=$(id -u) HOST_GID=$(id -g)
           docker compose run --rm android-ci-nokvm
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: artifacts-static
+          name: artifacts-static-${{ github.run_id }}
           path: artifacts/
+          retention-days: 14
+
+  instrumented:
+  # Full pipeline with emulator; requires KVM (GitHub-hosted ubuntu-latest or self-hosted).
+    runs-on: ubuntu-latest
+    needs: static-and-native
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check KVM device
+        id: kvm
+        run: |
+          if [[ -c /dev/kvm ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enable KVM access for runner user
+        if: steps.kvm.outputs.available == 'true'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -la /dev/kvm || true
+
+      - name: Skip instrumented (no KVM on runner)
+        if: steps.kvm.outputs.available != 'true'
+        run: |
+          echo "::warning::No /dev/kvm on this runner — instrumented stages skipped."
+          echo "Use a self-hosted runner with KVM (see docs/ci-github.md) or trigger workflow ci-self-hosted.yml."
+
+      - uses: actions/cache@v4
+        if: steps.kvm.outputs.available == 'true'
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Build CI image
+        if: steps.kvm.outputs.available == 'true'
+        run: scripts/ci/docker/build-image.sh
+
+      - name: full CI (emulator + instrumented)
+        if: steps.kvm.outputs.available == 'true'
+        env:
+          TEST_VOLUME_PASSWORD: ${{ secrets.TEST_VOLUME_PASSWORD }}
+        run: |
+          export HOST_UID=$(id -u) HOST_GID=$(id -g)
+          export KVM_GID=$(stat -c %g /dev/kvm)
+          docker compose run --rm android-ci
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.kvm.outputs.available == 'true'
+        with:
+          name: artifacts-instrumented-${{ github.run_id }}
+          path: artifacts/
+          retention-days: 14

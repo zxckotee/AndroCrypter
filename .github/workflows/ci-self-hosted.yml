@@ -1,0 +1,47 @@
+name: ci-self-hosted
+
+# Full Docker CI on your SSH server with KVM (self-hosted GitHub Actions runner).
+# Register the runner with labels: self-hosted, linux, kvm, hcvault
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-self-hosted-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_TAG: hcvault/android-ci:ci-${{ github.run_id }}
+
+jobs:
+  docker-full:
+    runs-on: [self-hosted, linux, kvm, hcvault]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preconditions
+        run: |
+          command -v docker >/dev/null || { echo "Docker required on the runner host"; exit 1; }
+          test -c /dev/kvm || { echo "/dev/kvm missing — add runner user to kvm group"; exit 1; }
+          docker compose version
+
+      - name: Build CI image
+        run: scripts/ci/docker/build-image.sh
+
+      - name: Full test matrix (native + emulator)
+        env:
+          TEST_VOLUME_PASSWORD: ${{ secrets.TEST_VOLUME_PASSWORD }}
+        run: |
+          export HOST_UID=$(id -u) HOST_GID=$(id -g)
+          export KVM_GID=$(stat -c %g /dev/kvm)
+          docker compose run --rm android-ci
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: artifacts-self-hosted-${{ github.run_id }}
+          path: artifacts/
+          retention-days: 21

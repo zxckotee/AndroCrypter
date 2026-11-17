@@ -1,0 +1,45 @@
+name: nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 06:00 Moscow (UTC+3), adjust as needed
+  workflow_dispatch:
+    inputs:
+      api_level:
+        description: Android API for emulator image checks
+        type: choice
+        options: ['30', '34']
+        default: '34'
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+env:
+  IMAGE_TAG: hcvault/android-ci:nightly-${{ github.run_id }}
+
+jobs:
+  extended:
+    runs-on: [self-hosted, linux, kvm, hcvault]
+    continue-on-error: true # optional tier until Magisk pipeline lands
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build CI image
+        run: scripts/ci/docker/build-image.sh
+
+      - name: Nightly full run
+        env:
+          TEST_VOLUME_PASSWORD: ${{ secrets.TEST_VOLUME_PASSWORD }}
+          API: ${{ github.event.inputs.api_level || '34' }}
+        run: |
+          export HOST_UID=$(id -u) HOST_GID=$(id -g)
+          export KVM_GID=$(stat -c %g /dev/kvm)
+          docker compose run --rm android-ci
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-${{ github.run_id }}
+          path: artifacts/
+          retention-days: 7
