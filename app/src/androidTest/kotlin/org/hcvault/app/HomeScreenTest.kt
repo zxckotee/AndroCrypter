@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import org.hcvault.app.ui.HcVaultTheme
 import org.hcvault.app.ui.HomeScreen
+import org.hcvault.app.ui.HomeUiState
 import org.hcvault.app.ui.TAG_OPEN_BUTTON
 import org.junit.Rule
 import org.junit.Test
@@ -15,7 +16,9 @@ class HomeScreenTest {
 
     @Test
     fun openButtonIsShown() {
-        compose.setContent { HcVaultTheme { HomeScreen() } }
+        compose.setContent {
+            HcVaultTheme { HomeScreen(previewState = HomeUiState(rootTitle = "No root")) }
+        }
         compose.onNodeWithTag(TAG_OPEN_BUTTON).assertIsDisplayed()
     }
 }
