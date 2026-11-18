@@ -128,6 +128,12 @@ if(NOT ANDROID)
     add_executable(hcvault-mkvol ${CMAKE_CURRENT_SOURCE_DIR}/tools/hcvault-mkvol.c)
     target_link_libraries(hcvault-mkvol PRIVATE veracrypt_volume)
 
+    add_executable(hcvault-seed-png ${CMAKE_CURRENT_SOURCE_DIR}/tools/hcvault-seed-png.c)
+    target_link_libraries(hcvault-seed-png PRIVATE hcvault_vfs)
+
+    add_executable(hcvault-vfs-digest ${CMAKE_CURRENT_SOURCE_DIR}/tools/hcvault-vfs-digest.c)
+    target_link_libraries(hcvault-vfs-digest PRIVATE hcvault_vfs)
+
     if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND HCVAULT_BUILD_FUZZ)
         add_executable(header_fuzz tests/header_fuzz.c)
         target_link_libraries(header_fuzz PRIVATE veracrypt_volume)

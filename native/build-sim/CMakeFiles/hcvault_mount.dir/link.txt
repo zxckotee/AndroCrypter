@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhcvault_mount.a CMakeFiles/hcvault_mount.dir/mount/loop_setup.c.o CMakeFiles/hcvault_mount.dir/mount/fsprobe.c.o CMakeFiles/hcvault_mount.dir/mount/mountctl.c.o CMakeFiles/hcvault_mount.dir/mount/fuse_volume.c.o CMakeFiles/hcvault_mount.dir/mount/registry.c.o CMakeFiles/hcvault_mount.dir/mount/sockctl.c.o
+/usr/bin/ranlib libhcvault_mount.a

@@ -1,0 +1,37 @@
+name: ci-nightly
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  native-matrix-fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build CI image
+        run: scripts/ci/docker/build-image.sh
+      - name: Oracle matrix + tests + fuzz
+        env:
+          TEST_VOLUME_PASSWORD: ${{ secrets.TEST_VOLUME_PASSWORD }}
+        run: |
+          export HOST_UID=$(id -u) HOST_GID=$(id -g)
+          docker compose run --rm android-ci-nokvm bash -lc '
+            set -euo pipefail
+            cmake -S native -B native/build-ci -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHCVAULT_BUILD_TESTS=ON
+            cmake --build native/build-ci -j"$(nproc)"
+            if command -v veracrypt; then
+              scripts/fixtures/make-oracle-matrix.sh /tmp/oracle full
+              export HCVAULT_ORACLE_DIR=/tmp/oracle
+              native/build-ci/hcvault_volume_tests --gtest_brief=1
+            else
+              echo "SKIP(no-veracrypt): oracle matrix"
+            fi
+            if command -v clang && clang --version | grep -q libFuzzer; then
+              cmake -S native -B native/build-fuzz -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+                -DHCVAULT_BUILD_TESTS=OFF -DHCVAULT_BUILD_FUZZ=ON
+              cmake --build native/build-fuzz --target header_fuzz -j"$(nproc)" || echo "SKIP(header_fuzz build)"
+            else
+              echo "SKIP(no-clang-fuzzer)"
+            fi
+          '

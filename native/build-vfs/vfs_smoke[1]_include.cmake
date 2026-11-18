@@ -1,0 +1,5 @@
+if(EXISTS "/agent/repos/AndroCrypter/native/build-vfs/vfs_smoke[1]_tests.cmake")
+  include("/agent/repos/AndroCrypter/native/build-vfs/vfs_smoke[1]_tests.cmake")
+else()
+  add_test(vfs_smoke_NOT_BUILT vfs_smoke_NOT_BUILT)
+endif()

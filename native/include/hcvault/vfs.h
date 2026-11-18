@@ -40,6 +40,9 @@ vfs_status vfs_list_dir(vfs_ctx* ctx, const char* path, vfs_dirent* entries, siz
 /** Read entire file at path into buf (truncates if cap < file size). */
 vfs_status vfs_read_file(vfs_ctx* ctx, const char* path, void* buf, size_t cap, size_t* out_len);
 
+/** Write a single file into the FAT root directory (FAT12/16; basename up to 8.3). */
+vfs_status vfs_fat_put_root_file(vfs_ctx* ctx, const char* basename, const void* data, size_t len);
+
 #ifdef __cplusplus
 }
 #endif

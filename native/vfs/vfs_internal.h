@@ -23,4 +23,6 @@ struct vfs_ctx {
 };
 
 vfs_status vfs_ctx_read(vfs_ctx* ctx, uint64_t offset, void* buf, size_t len);
+vfs_status vfs_ctx_write(vfs_ctx* ctx, uint64_t offset, const void* buf, size_t len);
 vfs_status vfs_ctx_read_sector(vfs_ctx* ctx, uint32_t lba, void* buf);
+vfs_status vfs_ctx_write_sector(vfs_ctx* ctx, uint32_t lba, const void* buf);

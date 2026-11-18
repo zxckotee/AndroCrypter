@@ -49,8 +49,19 @@ vfs_status vfs_ctx_read(vfs_ctx* ctx, uint64_t offset, void* buf, size_t len) {
     return from_vc(vc_read(ctx->vol, offset, buf, len));
 }
 
+vfs_status vfs_ctx_write(vfs_ctx* ctx, uint64_t offset, const void* buf, size_t len) {
+    if (ctx == NULL || ctx->vol == NULL) {
+        return VFS_ERR_INTERNAL;
+    }
+    return from_vc(vc_write(ctx->vol, offset, buf, len));
+}
+
 vfs_status vfs_ctx_read_sector(vfs_ctx* ctx, uint32_t lba, void* buf) {
     return vfs_ctx_read(ctx, (uint64_t)lba * ctx->bytes_per_sector, buf, ctx->bytes_per_sector);
+}
+
+vfs_status vfs_ctx_write_sector(vfs_ctx* ctx, uint32_t lba, const void* buf) {
+    return vfs_ctx_write(ctx, (uint64_t)lba * ctx->bytes_per_sector, buf, ctx->bytes_per_sector);
 }
 
 static int boot_is_fat(const uint8_t* boot) {
@@ -115,7 +126,7 @@ static int name_match(const char* a, const char* b) {
 }
 
 static vfs_status fat_read_bytes(vfs_ctx* ctx, uint8_t* fat, size_t fat_bytes) {
-    uint32_t per = ctx->sectors_per_fat32 ? ctx->sectors_per_fat32 : ctx->sectors_per_fat16;
+    uint32_t per = (ctx->fat_bits == 32) ? ctx->sectors_per_fat32 : ctx->sectors_per_fat16;
     size_t need = (size_t)per * ctx->bytes_per_sector;
     if (fat_bytes < need) {
         return VFS_ERR_INTERNAL;
@@ -208,7 +219,7 @@ static vfs_status read_root_fat1216(vfs_ctx* ctx, uint8_t** out, size_t* out_len
     if (buf == NULL) {
         return VFS_ERR_INTERNAL;
     }
-    uint32_t lba = ctx->data_start_sector - root_sectors;
+    uint32_t lba = ctx->reserved_sectors + ctx->num_fats * ctx->sectors_per_fat16;
     for (uint32_t i = 0; i < root_sectors; i++) {
         vfs_status st = vfs_ctx_read_sector(ctx, lba + i, buf + (size_t)i * ctx->bytes_per_sector);
         if (st != VFS_OK) {
@@ -440,7 +451,8 @@ vfs_status vfs_list_dir(vfs_ctx* ctx, const char* path, vfs_dirent* entries, siz
         path++;
     }
 
-    uint32_t fat_bytes = (ctx->sectors_per_fat32 ? ctx->sectors_per_fat32 : ctx->sectors_per_fat16) * ctx->bytes_per_sector;
+    uint32_t fat_bytes =
+        ((ctx->fat_bits == 32) ? ctx->sectors_per_fat32 : ctx->sectors_per_fat16) * ctx->bytes_per_sector;
     uint8_t* fat = malloc(fat_bytes);
     if (fat == NULL) {
         return VFS_ERR_INTERNAL;
@@ -484,7 +496,8 @@ vfs_status vfs_read_file(vfs_ctx* ctx, const char* path, void* buf, size_t cap, 
     if (ctx == NULL || path == NULL || buf == NULL) {
         return VFS_ERR_INTERNAL;
     }
-    uint32_t fat_bytes = (ctx->sectors_per_fat32 ? ctx->sectors_per_fat32 : ctx->sectors_per_fat16) * ctx->bytes_per_sector;
+    uint32_t fat_bytes =
+        ((ctx->fat_bits == 32) ? ctx->sectors_per_fat32 : ctx->sectors_per_fat16) * ctx->bytes_per_sector;
     uint8_t* fat = malloc(fat_bytes);
     if (fat == NULL) {
         return VFS_ERR_INTERNAL;
@@ -527,4 +540,164 @@ vfs_status vfs_read_file(vfs_ctx* ctx, const char* path, void* buf, size_t cap, 
     }
     free(data);
     return VFS_OK;
+}
+
+static void to_83(const char* basename, uint8_t ent[DIR_ENTRY_SIZE]) {
+    memset(ent, 0, DIR_ENTRY_SIZE);
+    char base[9];
+    char ext[4];
+    strncpy(base, basename, 8);
+    base[8] = '\0';
+    ext[0] = '\0';
+    const char* dot = strrchr(basename, '.');
+    if (dot != NULL && dot[1] != '\0') {
+        strncpy(ext, dot + 1, 3);
+    }
+    for (size_t i = 0; i < 8; i++) {
+        char c = i < strlen(base) ? base[i] : ' ';
+        if (c >= 'a' && c <= 'z') {
+            c = (char)(c - 'a' + 'A');
+        }
+        ent[i] = (uint8_t)c;
+    }
+    for (size_t i = 0; i < 3; i++) {
+        char c = i < strlen(ext) ? ext[i] : ' ';
+        if (c >= 'a' && c <= 'z') {
+            c = (char)(c - 'a' + 'A');
+        }
+        ent[8 + i] = (uint8_t)c;
+    }
+    ent[11] = ATTR_ARCHIVE;
+}
+
+vfs_status vfs_fat_put_root_file(vfs_ctx* ctx, const char* basename, const void* data, size_t len) {
+    if (ctx == NULL || basename == NULL || (data == NULL && len > 0)) {
+        return VFS_ERR_INTERNAL;
+    }
+    if (ctx->fat_bits == 32) {
+        return VFS_ERR_UNSUPPORTED;
+    }
+
+    uint32_t fat_bytes = ctx->sectors_per_fat16 * ctx->bytes_per_sector;
+    uint8_t* fat = calloc(1, fat_bytes);
+    if (fat == NULL) {
+        return VFS_ERR_INTERNAL;
+    }
+    vfs_status st = fat_read_bytes(ctx, fat, fat_bytes);
+    if (st != VFS_OK) {
+        free(fat);
+        return st;
+    }
+
+    uint32_t root_sector =
+        ctx->reserved_sectors + ctx->num_fats * ctx->sectors_per_fat16;
+    uint32_t root_sectors =
+        (ctx->root_entry_count * DIR_ENTRY_SIZE + ctx->bytes_per_sector - 1) / ctx->bytes_per_sector;
+
+    int slot = -1;
+    uint8_t sector[512];
+    for (uint32_t s = 0; s < root_sectors && slot < 0; s++) {
+        st = vfs_ctx_read_sector(ctx, root_sector + s, sector);
+        if (st != VFS_OK) {
+            free(fat);
+            return st;
+        }
+        for (uint32_t i = 0; i < ctx->bytes_per_sector / DIR_ENTRY_SIZE; i++) {
+            uint8_t tag = sector[i * DIR_ENTRY_SIZE];
+            if (tag == SLOT_FREE || tag == SLOT_DELETED) {
+                slot = (int)(s * (ctx->bytes_per_sector / DIR_ENTRY_SIZE) + i);
+                break;
+            }
+        }
+    }
+    if (slot < 0) {
+        free(fat);
+        return VFS_ERR_RANGE;
+    }
+
+    uint32_t cluster = 2;
+    uint32_t clusters_needed =
+        (uint32_t)((len + (uint64_t)ctx->sectors_per_cluster * ctx->bytes_per_sector - 1) /
+                   ((uint64_t)ctx->sectors_per_cluster * ctx->bytes_per_sector));
+    if (clusters_needed == 0) {
+        clusters_needed = 1;
+    }
+    if (cluster + clusters_needed > ctx->cluster_count) {
+        free(fat);
+        return VFS_ERR_RANGE;
+    }
+
+    for (uint32_t c = 0; c < clusters_needed; c++) {
+        uint32_t cl = cluster + c;
+        uint16_t eoc = (ctx->fat_bits == 12) ? 0x0FF8 : 0xFFF8;
+        if (c + 1 < clusters_needed) {
+            eoc = (uint16_t)(cl + 1);
+        }
+        if (ctx->fat_bits == 12) {
+            uint32_t offset = cl + cl / 2;
+            uint16_t entry = (uint16_t)fat[offset] | ((uint16_t)(fat[offset + 1] & 0xFF) << 8);
+            if (cl & 1u) {
+                entry = (uint16_t)((entry & 0x0F00) | (eoc & 0x0FFF));
+            } else {
+                entry = (uint16_t)((entry & 0xF000) | (eoc & 0x0FFF));
+            }
+            fat[offset] = (uint8_t)(entry & 0xFF);
+            fat[offset + 1] = (uint8_t)((entry >> 8) & 0xFF);
+        } else {
+            fat[cl * 2] = (uint8_t)(eoc & 0xFF);
+            fat[cl * 2 + 1] = (uint8_t)((eoc >> 8) & 0xFF);
+        }
+    }
+
+    for (uint32_t f = 0; f < ctx->num_fats; f++) {
+        uint32_t base = (ctx->fat_start_sector + f * ctx->sectors_per_fat16) * ctx->bytes_per_sector;
+        for (uint32_t i = 0; i < ctx->sectors_per_fat16; i++) {
+            st = vfs_ctx_write(ctx, base + (uint64_t)i * ctx->bytes_per_sector, fat + i * ctx->bytes_per_sector,
+                              ctx->bytes_per_sector);
+            if (st != VFS_OK) {
+                free(fat);
+                return st;
+            }
+        }
+    }
+    free(fat);
+
+    size_t written = 0;
+    for (uint32_t c = 0; c < clusters_needed && written < len; c++) {
+        uint32_t cl = cluster + c;
+        uint64_t off =
+            ((uint64_t)(ctx->data_start_sector) + (uint64_t)(cl - 2) * ctx->sectors_per_cluster) *
+            ctx->bytes_per_sector;
+        size_t chunk = (size_t)ctx->sectors_per_cluster * ctx->bytes_per_sector;
+        if (written + chunk > len) {
+            memset(sector, 0, sizeof(sector));
+            memcpy(sector, (const uint8_t*)data + written, len - written);
+            st = vfs_ctx_write(ctx, off, sector, chunk);
+            written = len;
+        } else {
+            st = vfs_ctx_write(ctx, off, (const uint8_t*)data + written, chunk);
+            written += chunk;
+        }
+        if (st != VFS_OK) {
+            return st;
+        }
+    }
+
+    uint8_t ent[DIR_ENTRY_SIZE];
+    to_83(basename, ent);
+    ent[26] = (uint8_t)(cluster & 0xFF);
+    ent[27] = (uint8_t)((cluster >> 8) & 0xFF);
+    ent[28] = (uint8_t)(len & 0xFF);
+    ent[29] = (uint8_t)((len >> 8) & 0xFF);
+    ent[30] = (uint8_t)((len >> 16) & 0xFF);
+    ent[31] = (uint8_t)((len >> 24) & 0xFF);
+
+    uint32_t slot_sector = root_sector + (uint32_t)slot / (ctx->bytes_per_sector / DIR_ENTRY_SIZE);
+    uint32_t slot_off = ((uint32_t)slot % (ctx->bytes_per_sector / DIR_ENTRY_SIZE)) * DIR_ENTRY_SIZE;
+    st = vfs_ctx_read_sector(ctx, slot_sector, sector);
+    if (st != VFS_OK) {
+        return st;
+    }
+    memcpy(sector + slot_off, ent, DIR_ENTRY_SIZE);
+    return vfs_ctx_write_sector(ctx, slot_sector, sector);
 }

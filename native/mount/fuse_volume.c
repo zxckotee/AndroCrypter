@@ -122,9 +122,8 @@ hm_status hm_fuse_volume_start(struct hm_fuse_volume* fv, const char* mountpoint
 
     struct fv_ctx ctx = {.vol = fv->vol, .size = fv->size, .readonly = fv->readonly};
 
-    char* argv[] = {(char*)"hcvault-mountd", (char*)mountpoint, (char*)"-o", (char*)"default_permissions"};
-    int argc = 4;
-    struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+    struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+    fuse_opt_add_arg(&args, "hcvault-mountd");
     struct fuse* fuse = fuse_new(&args, &fv_ops, sizeof(fv_ops), &ctx);
     fuse_opt_free_args(&args);
     if (fuse == NULL) {

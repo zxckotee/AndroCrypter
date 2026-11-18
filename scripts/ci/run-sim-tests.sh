@@ -44,6 +44,26 @@ sim_fixture_stage() {
   fi
 }
 
+sim_picture_stage() {
+  local name=sim-acceptance-picture
+  STAGES+=("$name")
+  if run_logged "$name" "$ROOT/scripts/sim/acceptance-picture.sh"; then
+    if grep -q 'acceptance-picture: PASS' "$ART/$name.log"; then
+      RESULT[$name]=PASS
+    elif grep -qE 'SKIP\(' "$ART/$name.log"; then
+      local why
+      why=$(grep -m1 -oE 'SKIP\([^)]+\)' "$ART/$name.log" | sed 's/^SKIP(//;s/)$//')
+      RESULT[$name]="SKIP($why)"
+    else
+      RESULT[$name]=FAIL
+      FAILED=1
+    fi
+  else
+    RESULT[$name]=FAIL
+    FAILED=1
+  fi
+}
+
 sim_mount_stage() {
   local name=sim-mount-ext4
   STAGES+=("$name")
@@ -70,11 +90,16 @@ if [[ "${ALLOW_SIM_SKIP:-}" == "1" ]] && [[ $EUID -ne 0 ]] && [[ ! -w /dev/fuse 
   skip_stage sim-spike "no-privileged-sim"
   skip_stage sim-fixtures "no-privileged-sim"
   skip_stage sim-mount-ext4 "no-privileged-sim"
+  skip_stage sim-acceptance-picture "no-privileged-sim"
   exit 0
 fi
+
+export ART
+export HCVAULT_SIM_FIXTURE_DIR="${HCVAULT_SIM_FIXTURE_DIR:-$ART/sim-fixtures}"
 
 stage sim-spike "$ROOT/scripts/sim/spike-capabilities.sh"
 sim_fixture_stage
 sim_mount_stage
+sim_picture_stage
 
 exit 0

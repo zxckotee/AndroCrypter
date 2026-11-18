@@ -1,0 +1,14 @@
+# Target labels
+ googletest-populate
+# Source files and their labels
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/CMakeFiles/googletest-populate
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/CMakeFiles/googletest-populate.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/CMakeFiles/googletest-populate-complete.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-build.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-configure.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-download.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-install.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-mkdir.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-patch.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-test.rule
+/agent/repos/AndroCrypter/native/build-vfs/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-update.rule

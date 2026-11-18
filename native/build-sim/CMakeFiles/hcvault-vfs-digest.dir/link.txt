@@ -1,0 +1,1 @@
+/usr/bin/gcc "CMakeFiles/hcvault-vfs-digest.dir/tools/hcvault-vfs-digest.c.o" -o hcvault-vfs-digest  libhcvault_vfs.a libveracrypt_volume.a -lm 

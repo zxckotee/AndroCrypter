@@ -1,0 +1,1 @@
+/usr/bin/cc "CMakeFiles/hcvault-mountd.dir/mount/mountd_main.c.o" -o hcvault-mountd  libhcvault_mount.a libveracrypt_volume.a -lm -lfuse3 -lpthread 
