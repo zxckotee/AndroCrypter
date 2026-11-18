@@ -39,3 +39,18 @@ The mount daemon reads the list of kernel filesystems from `HCVAULT_PROC_FILESYS
 namespaces. It is run first in every sim CI job; missing hard prerequisites fail the job.
 When a CI host lacks a kernel FS driver (for example vfat/exfat), the dependent tests report
 `SKIP(no-kernel-fs)` in `artifacts/summary.txt`, never PASS.
+
+## Docker (E5)
+
+Build and probe the simulator image (`docker/android-sim/Dockerfile` pins `veracrypt-console`;
+override the CLI with `HCVAULT_VERACRYPT` on the host if needed):
+
+```bash
+export TEST_VOLUME_PASSWORD='...'   # optional, for scripts/sim/generate-fixtures.sh
+scripts/ci/docker/build-sim-image.sh
+docker compose run --rm android-sim scripts/sim/setup-layout.sh
+docker compose run --rm android-sim scripts/sim/spike-capabilities.sh
+```
+
+Capability profiles: point `HCVAULT_PROC_FILESYSTEMS` at a fixture such as
+`testdata/sim/proc-filesystems.no-exfat` to emulate a kernel without exfat/ntfs3.

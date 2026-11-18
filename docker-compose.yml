@@ -46,6 +46,29 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true -Duser.home=/home/ci
     command: ["scripts/ci/run-local.sh"]
 
+  # Stage 1 Android userland simulator (privileged mount namespaces, Magisk stubs).
+  # Usage: docker compose run --rm android-sim scripts/sim/spike-capabilities.sh
+  android-sim:
+    build:
+      context: .
+      dockerfile: docker/android-sim/Dockerfile
+    image: hcvault/android-sim:local
+    privileged: true
+    working_dir: /workspace
+    user: "0:0"
+    volumes:
+      - .:/workspace
+    devices:
+      - /dev/fuse:/dev/fuse
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - TEST_VOLUME_PASSWORD
+      - HCVAULT_PROC_FILESYSTEMS
+      - HCVAULT_VERACRYPT=veracrypt
+      - HCVAULT_MAGISK_VERSION=26.4-sim
+    shm_size: "512mb"
+
   # Mounted-mode experiments (/dev/fuse, loop devices); used by the magisk tier.
   android-ci-privileged:
     <<: *ci-common

@@ -4,6 +4,10 @@
 # Prints a PASS/FAIL/SKIP table and exits non-zero only on hard prerequisites.
 set -Eeuo pipefail
 
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=scripts/sim/lib/executor.sh
+source "$ROOT/scripts/sim/lib/executor.sh"
+
 SUDO=""
 if [[ $EUID -ne 0 ]]; then
   if sudo -n true 2>/dev/null; then SUDO="sudo -n"; else echo "FATAL: need root or passwordless sudo" >&2; exit 2; fi
@@ -23,8 +27,9 @@ echo "== kernel: $(uname -r) =="
 [[ -c /dev/loop-control ]] && row "/dev/loop-control" PASS || hard "/dev/loop-control" "missing"
 grep -qw fuse /proc/filesystems && row "fs: fuse" PASS || hard "fs: fuse" "not in /proc/filesystems"
 
+echo "== fs profile: ${HCVAULT_PROC_FILESYSTEMS:-/proc/filesystems} =="
 for fs in ext4 vfat exfat ntfs3 ntfs; do
-  if grep -qw "$fs" /proc/filesystems; then row "kernel fs: $fs" PASS; else row "kernel fs: $fs" SKIP "no kernel driver (profile: absent)"; fi
+  if kernel_has_fs "$fs"; then row "kernel fs: $fs" PASS; else row "kernel fs: $fs" SKIP "no kernel driver (profile: absent)"; fi
 done
 
 if [[ -c /dev/mapper/control ]]; then
