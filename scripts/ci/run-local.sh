@@ -74,3 +74,8 @@ fi
 if [[ "${RUN_SIM_TIER:-}" == "1" ]]; then
   stage sim-tests "$ROOT/scripts/ci/run-sim-tests.sh"
 fi
+
+# 6. Magisk / rootAVD tier (android-ci-privileged; honest SKIP until mounted mode ships)
+if [[ "${RUN_MAGISK_TIER:-}" == "1" ]]; then
+  stage magisk-tier "$ROOT/scripts/ci/run-magisk-tier.sh"
+fi

@@ -47,10 +47,12 @@ adb shell am instrument -w \
 Use the same `-e expect_magisk 1` when running `scripts/ci/run-instrumented-tests.sh` on a rooted
 hardware device (not supported in GitHub-hosted CI).
 
-## Docker “magisk tier” (future)
+## Docker “magisk tier” (Stage 2)
 
-`docker-compose.yml` defines `android-ci-privileged` (`/dev/fuse`, `SYS_ADMIN`) for loop/mount
-experiments. The script `scripts/ci/run-magisk-tier.sh` is not wired until the mount daemon exists.
+`docker-compose.yml` defines `android-ci-privileged` (`/dev/fuse`, `SYS_ADMIN`, `RUN_MAGISK_TIER=1`).
+After the stock emulator boots, `scripts/ci/run-magisk-tier.sh` probes root via `adb` (or the Stage 1
+`exec_adb` stub) and **honestly SKIP**s until rootAVD and app-side `hcvault-mountd` wiring land.
+See [stage2-emulator.md](stage2-emulator.md) and [threat-model.md](threat-model.md).
 
 ## Next implementation steps (for real Magisk integration)
 
