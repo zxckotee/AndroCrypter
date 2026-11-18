@@ -13,6 +13,13 @@ cmake --build "$BUILD" -j"$(nproc)"
 fixture="$(jq -r '.fixtures[0].file' "$ROOT/testdata/manifest.json")"
 export HCVAULT_FIXTURE="$ROOT/$fixture"
 
+if command -v veracrypt >/dev/null 2>&1; then
+  oracle="$(mktemp -d /tmp/hcvault-oracle.XXXXXX)"
+  if "$ROOT/scripts/fixtures/make-oracle-matrix.sh" "$oracle" quick; then
+    export HCVAULT_ORACLE_DIR="$oracle"
+  fi
+fi
+
 if [[ -x "$BUILD/hcvault_volume_tests" ]]; then
   "$BUILD/hcvault_volume_tests"
 fi

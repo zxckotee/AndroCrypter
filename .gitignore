@@ -12,6 +12,7 @@ artifacts/
 .emulator.pid
 native/build/
 native/build-ci/
+native/build-mount-test/
 native/build-host/
 native/build-smoke/
 core-crypto/.cxx/

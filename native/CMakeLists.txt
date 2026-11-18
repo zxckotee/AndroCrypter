@@ -6,6 +6,13 @@ else()
     project(hcvault_native LANGUAGES C)
 endif()
 
+set(HCVAULT_SANITIZE "" CACHE STRING "Sanitizers, e.g. address;undefined or thread")
+if(HCVAULT_SANITIZE)
+    string(REPLACE ";" "," HCVAULT_SAN_LIST "${HCVAULT_SANITIZE}")
+    add_compile_options(-fsanitize=${HCVAULT_SAN_LIST} -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=${HCVAULT_SAN_LIST})
+endif()
+
 set(VC_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/third_party/veracrypt)
 set(VC_COMMON ${VC_ROOT}/Common)
 set(VC_CRYPTO ${VC_ROOT}/Crypto)
@@ -16,6 +23,10 @@ set(HCVAULT_COMPILE_DEFS
     TC_UNIX
     TC_LINUX
     NO_OPTIMIZED_VERSIONS
+    VOLFORMAT
+    CRYPTOPP_DISABLE_ASM
+    CRYPTOPP_DISABLE_SSE2
+    CRYPTOPP_DISABLE_SSSE3
     CRYPTOPP_BOOL_X64=0
     CRYPTOPP_BOOL_X86=0
     CRYPTOPP_BOOL_X32=0
@@ -72,6 +83,9 @@ set(HCVAULT_WRAPPER_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/compat/encryption_thread_pool_minimal.c
     ${CMAKE_CURRENT_SOURCE_DIR}/compat/hcvault_stubs.c
     ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/vc_api.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/vc_keyfiles.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/vc_random.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/vc_create.c
 )
 
 add_library(veracrypt_volume STATIC
@@ -92,9 +106,53 @@ target_compile_definitions(veracrypt_volume PRIVATE ${HCVAULT_COMPILE_DEFS})
 target_compile_options(veracrypt_volume PRIVATE ${HCVAULT_C_FLAGS})
 target_link_libraries(veracrypt_volume PUBLIC m)
 
+option(HCVAULT_BUILD_FUZZ "Build libFuzzer header target (Clang only)" OFF)
+
 if(NOT ANDROID)
     add_executable(volume_smoke tests/volume_smoke.c)
     target_link_libraries(volume_smoke PRIVATE veracrypt_volume)
+
+    add_executable(hcvault-mkvol ${CMAKE_CURRENT_SOURCE_DIR}/tools/hcvault-mkvol.c)
+    target_link_libraries(hcvault-mkvol PRIVATE veracrypt_volume)
+
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND HCVAULT_BUILD_FUZZ)
+        add_executable(header_fuzz tests/header_fuzz.c)
+        target_link_libraries(header_fuzz PRIVATE veracrypt_volume)
+        target_compile_options(header_fuzz PRIVATE -fsanitize=fuzzer)
+        target_link_options(header_fuzz PRIVATE -fsanitize=fuzzer)
+    endif()
+
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(FUSE3 QUIET fuse3)
+    endif()
+    if(FUSE3_FOUND)
+        set(HCVAULT_MOUNT_LIB_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/mount/loop_setup.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/mount/fsprobe.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/mount/mountctl.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/mount/fuse_volume.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/mount/registry.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/mount/sockctl.c
+        )
+        add_library(hcvault_mount STATIC ${HCVAULT_MOUNT_LIB_SRC})
+        target_include_directories(hcvault_mount PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/mount
+        )
+        target_compile_definitions(hcvault_mount PUBLIC FUSE_USE_VERSION=31)
+        target_compile_options(hcvault_mount PRIVATE ${HCVAULT_C_FLAGS})
+        target_link_libraries(hcvault_mount PUBLIC veracrypt_volume ${FUSE3_LIBRARIES} pthread)
+        target_include_directories(hcvault_mount PUBLIC ${FUSE3_INCLUDE_DIRS})
+
+        add_executable(hcvault-mountd ${CMAKE_CURRENT_SOURCE_DIR}/mount/mountd_main.c)
+        target_compile_options(hcvault-mountd PRIVATE ${HCVAULT_C_FLAGS})
+        target_link_libraries(hcvault-mountd PRIVATE hcvault_mount)
+
+        add_executable(mount_loop_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/mount_loop_test.c)
+        target_compile_options(mount_loop_test PRIVATE ${HCVAULT_C_FLAGS})
+        target_link_libraries(mount_loop_test PRIVATE hcvault_mount)
+    endif()
 endif()
 
 if(HCVAULT_BUILD_TESTS)
@@ -109,6 +167,7 @@ if(HCVAULT_BUILD_TESTS)
 
     add_executable(hcvault_volume_tests
         tests/volume_test.cpp
+        tests/interop_test.cpp
     )
     target_link_libraries(hcvault_volume_tests PRIVATE veracrypt_volume GTest::gtest_main)
     target_compile_features(hcvault_volume_tests PRIVATE cxx_std_17)

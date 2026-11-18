@@ -1021,11 +1021,15 @@ ret:
 #endif // TC_WINDOWS_BOOT
 
 
-#if !defined (DEVICE_DRIVER) && !defined (TC_WINDOWS_BOOT) && !defined(HCVAULT_BUILD)
+#if !defined (DEVICE_DRIVER) && !defined (TC_WINDOWS_BOOT)
+
+#if !defined(HCVAULT_BUILD) || defined(VOLFORMAT)
 
 #ifdef VOLFORMAT
+# ifndef HCVAULT_BUILD
 #	include "../Format/TcFormat.h"
 #	include "Dlgcode.h"
+# endif
 #endif
 
 // Creates a volume header in memory
@@ -1350,6 +1354,7 @@ int CreateVolumeHeaderInMemory (HWND hwndDlg, BOOL bBoot, unsigned char *header,
 
 
 #ifdef VOLFORMAT
+# if !defined(HCVAULT_BUILD)
 	if (!bInPlaceEncNonSys && (showKeys || (bBoot && !masterKeydata)))
 	{
 		BOOL dots3 = FALSE;
@@ -1389,6 +1394,7 @@ int CreateVolumeHeaderInMemory (HWND hwndDlg, BOOL bBoot, unsigned char *header,
 			SendMessage (hHeaderKey, WM_SETTEXT, 0, (LPARAM) HeaderKeyGUIView);
 		}
 	}
+# endif /* !HCVAULT_BUILD */
 #endif	// #ifdef VOLFORMAT
 
 	*retInfo = cryptoInfo;
@@ -1403,6 +1409,10 @@ err:
 
 	return retVal;
 }
+
+#endif /* !HCVAULT_BUILD || VOLFORMAT */
+
+#if !defined(HCVAULT_BUILD)
 
 #if !defined(_UEFI)
 BOOL ReadEffectiveVolumeHeader (BOOL device, HANDLE fileHandle, uint8 *header, DWORD *bytesRead)
@@ -1622,4 +1632,5 @@ final_seq:
 }
 
 #endif // !defined(_UEFI)
+#endif // !defined(HCVAULT_BUILD)
 #endif // !defined (DEVICE_DRIVER) && !defined (TC_WINDOWS_BOOT)
