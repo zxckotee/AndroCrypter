@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 object RootEnvironmentProbe {
 
     suspend fun probe(): RootStatus = withContext(Dispatchers.IO) {
-        if (!Shell.isAppGrantedRoot()) {
+        if (Shell.isAppGrantedRoot() != true) {
             return@withContext RootStatus.NoSu
         }
         val version = Shell.cmd("magisk -v").exec()

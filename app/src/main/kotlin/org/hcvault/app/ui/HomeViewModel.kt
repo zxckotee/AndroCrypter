@@ -4,35 +4,43 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import org.hcvault.core.mount.RootEnvironmentProbe
-import org.hcvault.core.mount.RootStatus
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import org.hcvault.core.mount.MountController
+import org.hcvault.core.mount.mountActionEnabled
+import org.hcvault.core.mount.mountActionLabel
+import org.hcvault.core.mount.mountStatusLine
 import org.hcvault.core.mount.summaryForHome
 
 data class HomeUiState(
-    val rootStatus: RootStatus = RootStatus.NotChecked,
     val rootTitle: String? = null,
     val rootDetail: String? = null,
+    val mountActionLabel: String = "Checking root…",
+    val mountActionEnabled: Boolean = false,
+    val mountStatusLine: String? = null,
 )
 
 @HiltViewModel
-class HomeViewModel @Inject constructor() : ViewModel() {
+class HomeViewModel @Inject constructor(
+    private val mountController: MountController,
+) : ViewModel() {
 
-    private val _state = MutableStateFlow(HomeUiState())
-    val state: StateFlow<HomeUiState> = _state.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            val status = RootEnvironmentProbe.probe()
-            val (title, detail) = status.summaryForHome()
-            _state.value = HomeUiState(
-                rootStatus = status,
+    val state: StateFlow<HomeUiState> = mountController.state
+        .map { mount ->
+            val (title, detail) = mount.rootStatus.summaryForHome()
+            HomeUiState(
                 rootTitle = title.takeIf { it.isNotEmpty() },
                 rootDetail = detail.takeIf { it.isNotEmpty() },
+                mountActionLabel = mount.mountActionLabel(),
+                mountActionEnabled = mount.mountActionEnabled(),
+                mountStatusLine = mount.mountStatusLine(),
             )
         }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
+
+    fun onMountAction() {
+        mountController.onMountActionRequested()
     }
 }

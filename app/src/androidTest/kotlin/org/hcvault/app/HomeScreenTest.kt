@@ -17,7 +17,14 @@ class HomeScreenTest {
     @Test
     fun openButtonIsShown() {
         compose.setContent {
-            HcVaultTheme { HomeScreen(previewState = HomeUiState(rootTitle = "No root")) }
+            HcVaultTheme {
+                HomeScreen(
+                    previewState = HomeUiState(
+                        rootTitle = "No root",
+                        mountActionLabel = "Mount unavailable",
+                    ),
+                )
+            }
         }
         compose.onNodeWithTag(TAG_OPEN_BUTTON).assertIsDisplayed()
     }
