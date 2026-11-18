@@ -17,6 +17,8 @@ set(VC_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/third_party/veracrypt)
 set(VC_COMMON ${VC_ROOT}/Common)
 set(VC_CRYPTO ${VC_ROOT}/Crypto)
 
+option(HCVAULT_FORCE_PORTABLE_CRYPTO "Disable x86 AES-NI/SSE paths (use if cpu.c fails without -maes)" OFF)
+
 set(HCVAULT_COMPILE_DEFS
     HCVAULT_BUILD
     VC_DCS_DISABLE_ARGON2
@@ -31,6 +33,7 @@ set(HCVAULT_COMPILE_DEFS
     CRYPTOPP_BOOL_X86=0
     CRYPTOPP_BOOL_X32=0
     CRYPTOPP_BOOL_SSE2_INTRINSICS_AVAILABLE=0
+    CRYPTOPP_BOOL_AESNI_INTRINSICS_AVAILABLE=0
 )
 
 set(HCVAULT_C_FLAGS
@@ -48,10 +51,14 @@ if(ANDROID)
         "-Wl,-z,max-page-size=16384"
         "-Wl,-z,common-page-size=16384"
     )
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-6]86")
-    list(APPEND HCVAULT_C_FLAGS -msse2)
+elseif(NOT HCVAULT_FORCE_PORTABLE_CRYPTO)
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-        list(APPEND HCVAULT_C_FLAGS -maes -mpclmul)
+        list(APPEND HCVAULT_C_FLAGS -msse2 -maes -mpclmul)
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]86|x86")
+        list(APPEND HCVAULT_C_FLAGS -msse2)
+    elseif(CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_SYSTEM_PROCESSOR STREQUAL "")
+        # 64-bit host with an empty processor string (some cross/WSL setups): assume x86_64.
+        list(APPEND HCVAULT_C_FLAGS -msse2 -maes -mpclmul)
     endif()
 endif()
 
