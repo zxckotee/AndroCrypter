@@ -1,0 +1,1 @@
+/usr/bin/gcc "CMakeFiles/hcvault-mkvol.dir/tools/hcvault-mkvol.c.o" -o hcvault-mkvol  libveracrypt_volume.a -lm 

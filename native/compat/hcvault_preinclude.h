@@ -3,9 +3,18 @@
 #define VC_DCS_DISABLE_ARGON2 1
 #define HCVAULT_BUILD 1
 
-/* VeraCrypt sources use MSVC-style unsigned __int64; GNU lacks __int64 unless mapped. */
-#if !defined(_MSC_VER) && !defined(__int64)
+/*
+ * VeraCrypt sources use MSVC-style signed/unsigned __int64.  GCC needs either
+ * -fms-extensions (see native/CMakeLists.txt) or this macro so that
+ * "unsigned __int64" tokenizes to "unsigned long long".
+ */
+#if !defined(_MSC_VER)
+#ifndef __int64
 #define __int64 long long
+#endif
+#ifndef _int64
+#define _int64 long long
+#endif
 #endif
 
 #include <stdlib.h>

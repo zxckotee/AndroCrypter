@@ -69,3 +69,13 @@ else
     die "missing /dev/kvm"
   fi
 fi
+
+# 5. Android userland sim (privileged android-sim only; not android-ci-nokvm)
+if [[ "${RUN_SIM_TIER:-}" == "1" ]]; then
+  stage sim-tests "$ROOT/scripts/ci/run-sim-tests.sh"
+fi
+
+# 6. Magisk / rootAVD tier (android-ci-privileged; honest SKIP until mounted mode ships)
+if [[ "${RUN_MAGISK_TIER:-}" == "1" ]]; then
+  stage magisk-tier "$ROOT/scripts/ci/run-magisk-tier.sh"
+fi

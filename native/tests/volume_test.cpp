@@ -21,11 +21,10 @@ TEST(VolumeTest, OpenAndReadBootSector) {
     int fd = open(fixture, O_RDONLY);
     ASSERT_GE(fd, 0);
 
-    vc_open_params params = {
-        .password = password,
-        .password_len = std::strlen(password),
-        .pim = 0,
-    };
+    vc_open_params params = {};
+    params.password = password;
+    params.password_len = std::strlen(password);
+    params.pim = 0;
     vc_volume* vol = nullptr;
     vc_status st = vc_open(fd, &params, &vol);
     ASSERT_EQ(st, VC_OK);

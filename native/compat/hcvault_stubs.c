@@ -41,12 +41,13 @@ void serpent_decrypt_blocks(const unsigned __int8* in, unsigned __int8* out, siz
     }
 }
 
+#if CRYPTOPP_BOOL_X64 && !defined(CRYPTOPP_DISABLE_ASM)
 void twofish_enc_blk(void* ks, uint8* out, const uint8* in) {
-    twofish_encrypt(ks, out, in);
+    twofish_encrypt(ks, (u4byte*)out, (const u4byte*)in);
 }
 
 void twofish_dec_blk(void* ks, uint8* out, const uint8* in) {
-    twofish_decrypt(ks, out, in);
+    twofish_decrypt(ks, (u4byte*)out, (const u4byte*)in);
 }
 
 void twofish_enc_blk2(void* ks, uint8* out, const uint8* in) {
@@ -68,7 +69,9 @@ void twofish_dec_blk3(void* ks, uint8* out, const uint8* in) {
     twofish_dec_blk2(ks, out, in);
     twofish_dec_blk(ks, out + 32, in + 32);
 }
+#endif
 
+#if !defined(CRYPTOPP_DISABLE_ASM)
 void camellia_encrypt_asm(const uint8* in, uint8* out, const void* ks) {
     camellia_encrypt(out, in, ks);
 }
@@ -98,30 +101,7 @@ void camellia_dec_blk2(void* ks, uint8* out, const uint8* in) {
     camellia_decrypt(out, in, ks);
     camellia_decrypt(out + 16, in + 16, ks);
 }
-
-void kuznyechik_set_key_simd(const uint8* key, void* ks) {
-    kuznyechik_set_key(key, (kuznyechik_kds*)ks);
-}
-
-void kuznyechik_encrypt_block_simd(const uint8* in, uint8* out, const void* ks) {
-    kuznyechik_encrypt_block(out, in, ks);
-}
-
-void kuznyechik_decrypt_block_simd(const uint8* in, uint8* out, const void* ks) {
-    kuznyechik_decrypt_block(out, in, ks);
-}
-
-void kuznyechik_encrypt_blocks_simd(uint8* out, const uint8* in, size_t count, const void* ks) {
-    for (size_t i = 0; i < count; ++i) {
-        kuznyechik_encrypt_block(out + i * 16, in + i * 16, ks);
-    }
-}
-
-void kuznyechik_decrypt_blocks_simd(uint8* out, const uint8* in, size_t count, const void* ks) {
-    for (size_t i = 0; i < count; ++i) {
-        kuznyechik_decrypt_block(out + i * 16, in + i * 16, ks);
-    }
-}
+#endif
 
 void sha512_sse4(void) {}
 void sha512_rorx(void) {}

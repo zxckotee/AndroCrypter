@@ -1,0 +1,1 @@
+/usr/bin/gcc "CMakeFiles/hcvault-seed-png.dir/tools/hcvault-seed-png.c.o" -o hcvault-seed-png  libhcvault_vfs.a libveracrypt_volume.a -lm 

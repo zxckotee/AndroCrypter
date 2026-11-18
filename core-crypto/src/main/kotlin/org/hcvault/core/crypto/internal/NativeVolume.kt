@@ -13,4 +13,7 @@ internal object NativeVolume {
 
     /** On success returns [vc_status] VC_OK (0); otherwise a positive error code. */
     external fun nativeRead(handle: Long, offset: Long, out: ByteArray, len: Int): Int
+
+    /** Root directory names from native FAT VFS, or null on failure. */
+    external fun nativeListRoot(handle: Long): Array<String>?
 }
