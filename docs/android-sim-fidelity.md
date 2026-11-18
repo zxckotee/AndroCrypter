@@ -49,7 +49,7 @@ override the CLI with `HCVAULT_VERACRYPT` on the host if needed):
 export TEST_VOLUME_PASSWORD='...'   # optional, for scripts/sim/generate-fixtures.sh
 scripts/ci/docker/build-sim-image.sh
 docker compose run --rm android-sim scripts/sim/setup-layout.sh
-docker compose run --rm android-sim scripts/sim/spike-capabilities.sh
+docker compose run --rm android-sim scripts/ci/run-sim-tests.sh
 ```
 
 Capability profiles: point `HCVAULT_PROC_FILESYSTEMS` at a fixture such as

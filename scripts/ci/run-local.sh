@@ -69,3 +69,8 @@ else
     die "missing /dev/kvm"
   fi
 fi
+
+# 5. Android userland sim (privileged android-sim only; not android-ci-nokvm)
+if [[ "${RUN_SIM_TIER:-}" == "1" ]]; then
+  stage sim-tests "$ROOT/scripts/ci/run-sim-tests.sh"
+fi

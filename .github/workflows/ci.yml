@@ -26,3 +26,22 @@ jobs:
         with:
           name: artifacts-static
           path: artifacts/
+
+  # Privileged fuse/loop mounts; not runnable inside android-ci-nokvm (no SYS_ADMIN, no /dev/fuse).
+  # GitHub-hosted ubuntu-latest supports docker compose privileged; nested/sandbox runners may need
+  # ALLOW_SIM_SKIP=1 locally — CI must not use that escape hatch.
+  sim-mount:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build sim image
+        run: scripts/ci/docker/build-sim-image.sh
+      - name: sim acceptance (spike, fixtures, mount)
+        env:
+          TEST_VOLUME_PASSWORD: ${{ secrets.TEST_VOLUME_PASSWORD }}
+        run: docker compose run --rm android-sim scripts/ci/run-sim-tests.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: artifacts-sim
+          path: artifacts/
