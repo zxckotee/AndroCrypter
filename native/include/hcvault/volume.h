@@ -110,6 +110,9 @@ typedef struct vc_create_params {
 /* Creates a new file-hosted VeraCrypt volume (header at 0; optional hidden header). */
 vc_status vc_create_file(const char* path, const vc_create_params* params);
 
+/* Quick FAT12 layout in the decrypted data area (host/tests; not full mkfs). */
+vc_status vc_format_fat12(vc_volume* vol);
+
 #ifdef __cplusplus
 }
 #endif

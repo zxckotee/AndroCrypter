@@ -90,6 +90,7 @@ set(HCVAULT_WRAPPER_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/vc_keyfiles.c
     ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/vc_random.c
     ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/vc_create.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/vc_format.c
 )
 
 add_library(veracrypt_volume STATIC

@@ -1,7 +1,9 @@
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "Tcdefs.h"
 #include "hcvault/volume.h"
@@ -50,6 +52,7 @@ static char* slurp_file(const char* path, size_t* len) {
 
 int main(int argc, char** argv) {
     const char* out = "volume.hc";
+    int do_format = 0;
     const char* pwfile = NULL;
     uint64_t size = 3u * 1024u * 1024u;
     int pim = 0;
@@ -70,6 +73,12 @@ int main(int argc, char** argv) {
             if (prf < 0) return usage(argv[0]), 2;
         } else if (strcmp(argv[i], "--hidden") == 0 && i + 1 < argc) {
             hidden = strtoull(argv[++i], NULL, 0);
+        } else if (strcmp(argv[i], "--format") == 0 && i + 1 < argc) {
+            if (strcmp(argv[++i], "fat12") != 0) {
+                fprintf(stderr, "only --format fat12 supported\n");
+                return 2;
+            }
+            do_format = 1;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             return usage(argv[0]), 0;
         } else {
@@ -102,12 +111,40 @@ int main(int argc, char** argv) {
     };
 
     vc_status st = vc_create_file(out, &params);
-    burn(pw, pwlen);
-    free(pw);
     if (st != VC_OK) {
+        burn(pw, pwlen);
+        free(pw);
         fprintf(stderr, "create failed: %d\n", (int)st);
         return 1;
     }
+    if (do_format) {
+        int fd = open(out, O_RDWR);
+        if (fd < 0) {
+            fprintf(stderr, "open for format: %s\n", strerror(errno));
+            return 1;
+        }
+        vc_open_params op = {};
+        op.password = pw;
+        op.password_len = pwlen;
+        op.pim = pim;
+        op.prf = prf;
+        vc_volume* vol = NULL;
+        st = vc_open(fd, &op, &vol);
+        if (st != VC_OK) {
+            close(fd);
+            fprintf(stderr, "open for format failed: %d\n", (int)st);
+            return 1;
+        }
+        st = vc_format_fat12(vol);
+        vc_close(vol);
+        close(fd);
+        if (st != VC_OK) {
+            fprintf(stderr, "format failed: %d\n", (int)st);
+            return 1;
+        }
+    }
     printf("%s\n", out);
+    burn(pw, pwlen);
+    free(pw);
     return 0;
 }
