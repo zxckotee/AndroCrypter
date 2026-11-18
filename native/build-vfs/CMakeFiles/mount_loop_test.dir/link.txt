@@ -1,1 +1,0 @@
-/usr/bin/cc CMakeFiles/mount_loop_test.dir/tests/mount_loop_test.c.o -o mount_loop_test  libhcvault_mount.a libveracrypt_volume.a -lm -lfuse3 -lpthread 

@@ -1,1 +1,0 @@
-/usr/bin/cc CMakeFiles/volume_smoke.dir/tests/volume_smoke.c.o -o volume_smoke  libveracrypt_volume.a -lm 

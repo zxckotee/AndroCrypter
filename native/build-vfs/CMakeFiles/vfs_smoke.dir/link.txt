@@ -1,1 +1,0 @@
-/usr/bin/g++ CMakeFiles/vfs_smoke.dir/tests/vfs_smoke.cpp.o -o vfs_smoke   -L/usr/lib/gcc/x86_64-linux-gnu/14  libhcvault_vfs.a lib/libgtest_main.a libveracrypt_volume.a -lm lib/libgtest.a 

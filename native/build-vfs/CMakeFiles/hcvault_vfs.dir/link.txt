@@ -1,2 +1,0 @@
-/usr/bin/ar qc libhcvault_vfs.a CMakeFiles/hcvault_vfs.dir/vfs/vfs_fat.c.o
-/usr/bin/ranlib libhcvault_vfs.a

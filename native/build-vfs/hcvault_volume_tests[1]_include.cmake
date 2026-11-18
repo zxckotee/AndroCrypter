@@ -1,5 +1,0 @@
-if(EXISTS "/agent/repos/AndroCrypter/native/build-vfs/hcvault_volume_tests[1]_tests.cmake")
-  include("/agent/repos/AndroCrypter/native/build-vfs/hcvault_volume_tests[1]_tests.cmake")
-else()
-  add_test(hcvault_volume_tests_NOT_BUILT hcvault_volume_tests_NOT_BUILT)
-endif()
