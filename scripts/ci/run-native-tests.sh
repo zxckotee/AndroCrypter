@@ -23,4 +23,7 @@ fi
 if [[ -x "$BUILD/hcvault_volume_tests" ]]; then
   "$BUILD/hcvault_volume_tests"
 fi
+if [[ -x "$BUILD/vfs_smoke" ]]; then
+  "$BUILD/vfs_smoke"
+fi
 "$BUILD/volume_smoke" "$ROOT/$fixture"

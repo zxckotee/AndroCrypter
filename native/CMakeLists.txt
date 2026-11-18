@@ -79,6 +79,10 @@ set(VERACRYPT_CRYPTO_SRC
     ${VC_CRYPTO}/blake2s.c
 )
 
+set(HCVAULT_VFS_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/vfs/vfs_fat.c
+)
+
 set(HCVAULT_WRAPPER_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/compat/encryption_thread_pool_minimal.c
     ${CMAKE_CURRENT_SOURCE_DIR}/compat/hcvault_stubs.c
@@ -105,6 +109,14 @@ target_include_directories(veracrypt_volume PUBLIC
 target_compile_definitions(veracrypt_volume PRIVATE ${HCVAULT_COMPILE_DEFS})
 target_compile_options(veracrypt_volume PRIVATE ${HCVAULT_C_FLAGS})
 target_link_libraries(veracrypt_volume PUBLIC m)
+
+add_library(hcvault_vfs STATIC ${HCVAULT_VFS_SRC})
+target_include_directories(hcvault_vfs PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/vfs
+)
+target_compile_options(hcvault_vfs PRIVATE ${HCVAULT_C_FLAGS})
+target_link_libraries(hcvault_vfs PUBLIC veracrypt_volume)
 
 option(HCVAULT_BUILD_FUZZ "Build libFuzzer header target (Clang only)" OFF)
 
@@ -173,11 +185,16 @@ if(HCVAULT_BUILD_TESTS)
     target_compile_features(hcvault_volume_tests PRIVATE cxx_std_17)
     include(GoogleTest)
     gtest_discover_tests(hcvault_volume_tests)
+
+    add_executable(vfs_smoke tests/vfs_smoke.cpp)
+    target_link_libraries(vfs_smoke PRIVATE hcvault_vfs GTest::gtest_main)
+    target_compile_features(vfs_smoke PRIVATE cxx_std_17)
+    gtest_discover_tests(vfs_smoke)
 endif()
 
 if(ANDROID)
     add_library(hcvault_jni SHARED jni/hcvault_jni.c)
-    target_link_libraries(hcvault_jni PRIVATE veracrypt_volume log)
+    target_link_libraries(hcvault_jni PRIVATE veracrypt_volume hcvault_vfs log)
     target_include_directories(hcvault_jni PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_options(hcvault_jni PRIVATE ${HCVAULT_PAGE_SIZE_LINK_FLAGS})
 endif()

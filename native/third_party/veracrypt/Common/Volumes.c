@@ -27,6 +27,7 @@
 
 #ifdef HCVAULT_BUILD
 #include "cpu.h"
+#include "Random.h"
 #elif !defined(DEVICE_DRIVER)
 #include "Random.h"
 #else
