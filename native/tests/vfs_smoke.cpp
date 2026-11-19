@@ -3,6 +3,7 @@
 #include <cstring>
 #include <vector>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <gtest/gtest.h>
@@ -20,7 +21,20 @@ TEST(VfsSmoke, ListRootAndReadSmallFile) {
     const char* fixture = std::getenv("HCVAULT_FIXTURE");
     ASSERT_NE(fixture, nullptr);
 
-    int fd = open(fixture, O_RDONLY);
+    char copy_path[] = "/tmp/hcvault-vfs-smoke-XXXXXX.hc";
+    int cfd = mkstemps(copy_path, 3);
+    ASSERT_GE(cfd, 0);
+    int src = open(fixture, O_RDONLY);
+    ASSERT_GE(src, 0);
+    struct stat stbuf;
+    ASSERT_EQ(fstat(src, &stbuf), 0);
+    std::vector<uint8_t> blob((size_t)stbuf.st_size);
+    ASSERT_EQ(read(src, blob.data(), blob.size()), (ssize_t)blob.size());
+    close(src);
+    ASSERT_EQ(write(cfd, blob.data(), blob.size()), (ssize_t)blob.size());
+    close(cfd);
+
+    int fd = open(copy_path, O_RDWR);
     ASSERT_GE(fd, 0);
 
     vc_open_params params = {};
@@ -36,6 +50,13 @@ TEST(VfsSmoke, ListRootAndReadSmallFile) {
     vfs_dirent names[64];
     size_t count = 0;
     ASSERT_EQ(vfs_list_dir(vfs, "/", names, 64, &count), VFS_OK);
+    if (count == 0) {
+        static const char payload[] = "hcvault-vfs-smoke";
+        ASSERT_EQ(vfs_fat_put_root_file(vfs, "SMOKE.TXT", payload, sizeof(payload) - 1u), VFS_OK);
+        ASSERT_EQ(vc_flush(vol), VC_OK);
+        count = 0;
+        ASSERT_EQ(vfs_list_dir(vfs, "/", names, 64, &count), VFS_OK);
+    }
     EXPECT_GT(count, 0u);
 
     for (size_t i = 0; i < count; i++) {
@@ -54,6 +75,7 @@ TEST(VfsSmoke, ListRootAndReadSmallFile) {
     vfs_close(vfs);
     vc_close(vol);
     close(fd);
+    unlink(copy_path);
 }
 
 } // namespace
